@@ -12,6 +12,8 @@ set -x
 export WANDB_MODE=${WANDB_MODE:-offline}
 
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}
+# NCCL P2P hangs during multi-GPU initialization on this host.
+export NCCL_P2P_DISABLE=${NCCL_P2P_DISABLE:-1}
 
 nnodes=${NNODES:-1}
 nproc_per_node=${NPROC_PER_NODE:-8}
@@ -34,6 +36,8 @@ MODEL_PATH=${MODEL_PATH:-<Your_Base_Model_Path>}
 
 # Path to save checkpoints
 SAVE_PATH=${SAVE_PATH:-./checkpoint/$experiment_name}
+SAVE_FREQ=${SAVE_FREQ:-10}
+MAX_CKPT_TO_KEEP=${MAX_CKPT_TO_KEEP:-1}
 
 torchrun --nnodes=$nnodes \
     --nproc_per_node=$nproc_per_node \
@@ -57,6 +61,7 @@ torchrun --nnodes=$nnodes \
     trainer.experiment_name=$experiment_name \
     trainer.logger='["console","wandb"]' \
     trainer.total_epochs=5 \
-    trainer.save_freq=50 \
+    trainer.save_freq=$SAVE_FREQ \
+    trainer.max_ckpt_to_keep=$MAX_CKPT_TO_KEEP \
     ulysses_sequence_parallel_size=4 \
     use_remove_padding=true "$@"
